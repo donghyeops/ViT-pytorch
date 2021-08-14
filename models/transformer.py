@@ -102,14 +102,10 @@ class VisionTransformer(nn.Module):
         out = self.out_ln(out[:, 0])
         return out
 
-    def slice_patch(self, img):
-        patches = []
-        P = self.P
-        _, c, h, w = img.shape
-        for i in range(h // P):
-            for j in range(w // P):
-                patches.append(img[:, :, i * P: (i+1) * P, j * P: (j+1) * P])
-        return torch.stack(patches, 1)
+    def slice_patch(self, x):
+        patches = x.unfold(1, 3, 3).unfold(2, self.P, self.P).unfold(3, self.P, self.P)  # (BS, 1, n, n, C, P, P)
+        patches = torch.flatten(patches, 1, 3)  # (BS, N, C, P, P)
+        return patches
 
 
 if __name__ == '__main__':
